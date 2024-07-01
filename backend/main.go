@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -40,6 +41,21 @@ func handleConnents(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func main() {
+// 监听广播通道，并将消息发送给所有连接的客户端
+func handleMessages() {
+	for {
+		msg := <-broadcast
+		for client := range clients {
+			err := client.WriteJSON(msg)
+			if err != nil {
+				log.Printf("error: %v", err)
+				client.Close()
+				delete(clients, client)
+			}
+		}
+	}
+}
 
+func main() {
+	fmt.Println("hello world")
 }
