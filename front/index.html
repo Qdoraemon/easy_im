@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebSocket Chat</title>
+</head>
+
+<body>
+    <input type="text" id="messageInput" />
+    <button onclick="sendMessage()">Send</button>
+    <ul id="chatMessage"></ul>
+
+    <script>
+        var socket = new WebSocket("ws://localhost:8080/ws");
+
+        // 获取服务器消息
+        socket.onmessage = function (event) {
+            var message = JSON.parse(event.data);
+            // var li = document.createElement("li");
+            var chat = document.getElementById("chatMessage");
+            var messageNode = document.createElement("li");
+            messageNode.appendChild(document.createTextNode(message.username + ": " + message.message));
+            chat.appendChild(messageNode);
+        }
+        function sendMessage() {
+            var messageInput = document.getElementById("messageInput");
+            var message = messageInput.value;
+            var username = prompt("请输入用户名");
+            var email = prompt("请输入邮箱");
+            var data = {
+                email: email,
+                username: username,
+                message: message
+            }
+            socket.send(JSON.stringify(data));
+        }
+
+    </script>
+</body>

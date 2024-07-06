@@ -11,7 +11,11 @@ import (
 // "net/http"
 var clients = make(map[*websocket.Conn]bool)
 var broadcast = make(chan Message)
-var urgrader = websocket.Upgrader{}
+var urgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 type Message struct {
 	Email    string `json:"email"`
@@ -21,9 +25,11 @@ type Message struct {
 
 // 用来升级HTTP连接为WebSocket连接
 func handleConnents(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("-------------")
 	ws, err := urgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
 	defer ws.Close()
 
@@ -45,6 +51,7 @@ func handleConnents(w http.ResponseWriter, r *http.Request) {
 func handleMessages() {
 	for {
 		msg := <-broadcast
+		fmt.Println("msg: ", msg)
 		for client := range clients {
 			err := client.WriteJSON(msg)
 			if err != nil {
@@ -57,5 +64,9 @@ func handleMessages() {
 }
 
 func main() {
-	fmt.Println("hello world")
+	// 注册链接
+	http.HandleFunc("/ws", handleConnents)
+	go handleMessages()
+	fmt.Println("start ")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
